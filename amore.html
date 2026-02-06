@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>💘</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#2a0b3d;
+      --text:#ffffff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 50% 30%, rgba(255,255,255,.10), transparent 60%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      color:var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .wrap{
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      text-align:center;
+      user-select:none;
+    }
+
+    .card{
+      width:min(560px, 92vw);
+      padding:26px 22px;
+      border-radius:20px;
+      background: rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      text-align:center; /* centra tutto dentro la card */
+    }
+
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(26px, 5vw, 40px);
+      letter-spacing: .2px;
+      text-align:center;
+    }
+
+    p{
+      margin:0 0 18px;
+      opacity:.9;
+      line-height:1.4;
+      font-size: clamp(14px, 2.6vw, 16px);
+      text-align:center;
+    }
+
+    /* Bottone (più affidabile su iPhone) */
+    .tap{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+      padding:12px 16px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.18);
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease;
+
+      /* iOS fix */
+      -webkit-appearance:none;
+      appearance:none;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      touch-action: manipulation; /* rende il tap più “snap” */
+    }
+    .tap:hover{ transform: translateY(-1px); background: rgba(0,0,0,.26); }
+    .tap:active{ transform: translateY(1px) scale(.99); }
+
+    .hint{
+      margin-top:12px;
+      font-size:13px;
+      opacity:.7;
+      text-align:center;
+    }
+
+    /* Cuore (pure CSS) */
+    .heart{
+      position: fixed;
+      left: 0; top: 0;
+      width: 16px; height: 16px;
+      transform: translate(-50%,-50%) rotate(45deg);
+      opacity: 0.95;
+      pointer-events:none;
+      filter: drop-shadow(0 10px 10px rgba(0,0,0,.25));
+      animation: floatUp var(--dur) ease-out forwards;
+    }
+    .heart::before,
+    .heart::after{
+      content:"";
+      position:absolute;
+      width: 16px; height: 16px;
+      background: var(--c);
+      border-radius: 50%;
+    }
+    .heart{
+      background: var(--c);
+      border-radius: 3px;
+    }
+    .heart::before{ left:-8px; top:0; }
+    .heart::after{ left:0; top:-8px; }
+
+    @keyframes floatUp{
+      0%   { transform: translate(-50%,-50%) rotate(45deg) scale(var(--s)); opacity:0; }
+      10%  { opacity: .95; }
+      100% { transform: translate(calc(-50% + var(--dx)), calc(-50% - var(--dy))) rotate(45deg) scale(calc(var(--s) * 1.2)); opacity:0; }
+    }
+
+    /* Sparkle text */
+    .glow{
+      display:inline-block;
+      animation: glow 1.6s ease-in-out infinite;
+    }
+    @keyframes glow{
+      0%,100%{ text-shadow: 0 0 0 rgba(255,255,255,0), 0 0 0 rgba(255,90,200,0); }
+      50%{ text-shadow: 0 0 18px rgba(255,255,255,.35), 0 0 28px rgba(255,90,200,.45); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card" id="area">
+      <h1><span class="glow">Cliccami 💘</span></h1>
+
+      <p id="msg">
+        Ti amo tantissimo amore mio ❤️
+      </p>
+
+      <button class="tap" id="btn" type="button">✨ Avvia la magia</button>
+      <div class="hint">Clicca dove vuoi amore mio ❤️</div>
+    </div>
+  </div>
+
+  <script>
+    // PERSONALIZZA QUI 👇
+    const DEDICA = "Ti amo tantissimo amore mio ❤️";
+    const CUORI_PER_CLICK = 18;   // quanti cuoricini escono a click
+    const AUTO_HEARTS = true;     // se true, dopo il primo click continua da solo
+    const AUTO_RATE_MS = 220;     // ogni quanto spara cuori
+
+    const colors = ["#ff4d6d","#ff6bd6","#ff9bd2","#ffd1dc","#ff375f","#ff7aa2"];
+
+    const btn = document.getElementById("btn");
+    const msg = document.getElementById("msg");
+
+    let started = false;
+    let autoTimer = null;
+
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+
+    function spawnHearts(x, y, count){
+      for(let i=0;i<count;i++){
+        const h = document.createElement("div");
+        h.className = "heart";
+
+        const c = colors[Math.floor(Math.random()*colors.length)];
+        const s = rand(0.7, 1.35);
+        const dur = rand(1.6, 2.6) + "s";
+        const dx = rand(-80, 80) + "px";
+        const dy = rand(220, 520) + "px";
+
+        h.style.setProperty("--c", c);
+        h.style.setProperty("--s", s);
+        h.style.setProperty("--dur", dur);
+        h.style.setProperty("--dx", dx);
+        h.style.setProperty("--dy", dy);
+
+        h.style.left = x + "px";
+        h.style.top = y + "px";
+
+        document.body.appendChild(h);
+        h.addEventListener("animationend", () => h.remove());
+      }
+    }
+
+    function startIfNeeded(){
+      if(started) return;
+      started = true;
+
+      msg.innerHTML = `<b>${DEDICA}</b>`;
+      btn.textContent = "💞 Vai di click";
+
+      if(AUTO_HEARTS){
+        autoTimer = setInterval(() => {
+          const x = rand(40, window.innerWidth - 40);
+          const y = rand(window.innerHeight*0.35, window.innerHeight*0.75);
+          spawnHearts(x, y, Math.floor(CUORI_PER_CLICK*0.65));
+        }, AUTO_RATE_MS);
+      }
+    }
+
+    function handleTap(clientX, clientY){
+      startIfNeeded();
+      const x = clientX ?? (window.innerWidth/2);
+      const y = clientY ?? (window.innerHeight/2);
+      spawnHearts(x, y, CUORI_PER_CLICK);
+    }
+
+    // tap/click ovunque
+    document.addEventListener("pointerdown", (e) => {
+      // pointerdown è super stabile su mobile
+      if(e.target === btn) return; // evitiamo doppio
+      handleTap(e.clientX, e.clientY);
+    });
+
+    // bottone: click + touchend (iOS a volte rompe)
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleTap(window.innerWidth/2, window.innerHeight/2);
+    });
+
+    btn.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      handleTap(window.innerWidth/2, window.innerHeight/2);
+    }, {passive:false});
+  </script>
+</body>
+</html>
